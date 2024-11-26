@@ -10,24 +10,23 @@
 /// [tokio's `ctrl_c`](tokio::signal::ctrl_c) on other platforms
 ///
 /// # Panics
-/// This function may panic if you:
-/// - do not have the `rt` tokio feature flag pulled in somehow
-/// - if the low-level C signal handler functions fail
+/// This function may panic if:
+/// - you do not have the `rt` tokio feature flag pulled in somehow
+/// - the low-level C signal handler functions fail
 pub async fn shutdown_signal() {
     #[cfg(target_family = "unix")]
     {
+        use std::pin::pin;
         use tokio::signal::unix::{signal, SignalKind};
         let mut interrupt = signal(SignalKind::interrupt()).expect("Failed to listen to sigint");
         let mut quit = signal(SignalKind::quit()).expect("Failed to listen to sigquit");
         let mut terminate = signal(SignalKind::terminate()).expect("Failed to listen to sigterm");
-        #[allow(clippy::redundant_pub_crate)]
-        {
-            tokio::select! {
-                _ = interrupt.recv() => {},
-                _ = quit.recv() => {},
-                _ = terminate.recv() => {}
-            }
-        }
+        futures_util::future::select_all([
+            pin!(interrupt.recv()),
+            pin!(quit.recv()),
+            pin!(terminate.recv()),
+        ])
+        .await;
     }
     #[cfg(not(target_family = "unix"))]
     tokio::signal::ctrl_c()

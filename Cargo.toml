@@ -1,6 +1,6 @@
 [package]
 name = "vss"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A dead simple library to allow for easily reused shutdown signal handling"
 repository = "https://github.com/randomairborne/vss"
@@ -10,4 +10,5 @@ keywords = ["shutdown", "axum"]
 categories = ["asynchronous", "web-programming"]
 
 [dependencies]
-tokio = { version = "1", features = ["signal", "macros"] }
+futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
+tokio = { version = "1", features = ["signal"] }
